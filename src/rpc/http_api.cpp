@@ -79,19 +79,21 @@ void http_api_connection::on_request( const fc::http::request& req, const fc::ht
       std::string req_body( req.body.begin(), req.body.end() );
       auto var = fc::json::from_string( req_body );
       const auto& var_obj = var.get_object();
-
+      string ssid;
+      if (var_obj.contains("ssid"))
+         ssid = var_obj["ssid"].as_string();
       if( var_obj.contains( "method" ) )
       {
          auto call = var.as<fc::rpc::request>();
          try
          {
             auto result = _rpc_state.local_call( call.method, call.params );
-            resp_body = fc::json::to_string( fc::rpc::response( *call.id, result ) );
+            resp_body = fc::json::to_string( fc::rpc::response( *call.id, ssid, result ) );
             resp_status = http::reply::OK;
          }
          catch ( const fc::exception& e )
          {
-            resp_body = fc::json::to_string( fc::rpc::response( *call.id, error_object{ 1, e.to_detail_string(), fc::variant(e)} ) );
+            resp_body = fc::json::to_string( fc::rpc::response( *call.id, ssid ,error_object{ 1, e.to_detail_string(), fc::variant(e)} ) );
             resp_status = http::reply::InternalServerError;
          }
       }

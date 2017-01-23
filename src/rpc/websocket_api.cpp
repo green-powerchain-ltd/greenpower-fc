@@ -78,6 +78,9 @@ std::string websocket_api_connection::on_message(
    {
       auto var = fc::json::from_string(message);
       const auto& var_obj = var.get_object();
+      string ssid;
+      if (var_obj.contains("ssid"))
+         ssid = var_obj["ssid"].as_string();
       if( var_obj.contains( "method" ) )
       {
          auto call = var.as<fc::rpc::request>();
@@ -87,7 +90,7 @@ std::string websocket_api_connection::on_message(
             auto result = _rpc_state.local_call( call.method, call.params );
             if( call.id )
             {
-               auto reply = fc::json::to_string( response( *call.id, result ) );
+               auto reply = fc::json::to_string( response( *call.id, ssid, result ) );
                if( send_message )
                   _connection.send_message( reply );
                return reply;
@@ -101,8 +104,7 @@ std::string websocket_api_connection::on_message(
             }
          }
          if( optexcept ) {
-
-               auto reply = fc::json::to_string( response( *call.id,  error_object{ 1, optexcept->to_detail_string(), fc::variant(*optexcept)}  ) );
+               auto reply = fc::json::to_string( response( *call.id, ssid, error_object{ 1, optexcept->to_detail_string(), fc::variant(*optexcept)}  ) );
                if( send_message )
                   _connection.send_message( reply );
 
