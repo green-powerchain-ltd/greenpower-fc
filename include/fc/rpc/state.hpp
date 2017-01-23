@@ -21,9 +21,10 @@ namespace fc { namespace rpc {
    struct response
    {
       response(){}
-      response( int64_t i, fc::variant r ):id(i),result(r){}
-      response( int64_t i, error_object r ):id(i),error(r){}
+      response( int64_t i, const std::string& ssi, fc::variant r ):id(i),ssid(ssi),result(r){}
+      response( int64_t i, const std::string& ssi, error_object r ):id(i),ssid(ssi),error(r){}
       int64_t                id = 0;
+      std::string            ssid;
       optional<fc::variant>  result;
       optional<error_object> error;
    };
@@ -57,4 +58,4 @@ namespace fc { namespace rpc {
 
 FC_REFLECT( fc::rpc::request, (id)(method)(params) );
 FC_REFLECT( fc::rpc::error_object, (code)(message)(data) )
-FC_REFLECT( fc::rpc::response, (id)(result)(error) )
+FC_REFLECT( fc::rpc::response, (id)(ssid)(result)(error) )
