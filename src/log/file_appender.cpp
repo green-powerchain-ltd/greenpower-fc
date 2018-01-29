@@ -37,11 +37,9 @@ namespace fc {
              {
                  FC_ASSERT( cfg.rotation_interval >= seconds( 1 ) );
                  FC_ASSERT( cfg.rotation_limit >= cfg.rotation_interval );
+                 rotate_files( true );
 
-
-
-
-                 _rotation_task = async( [this]() { rotate_files( true ); }, "rotate_files(1)" );
+//                 _rotation_task = async( [this]() { rotate_files( true ); }, "rotate_files(1)" );
              }
          }
 
@@ -49,7 +47,8 @@ namespace fc {
          {
             try
             {
-              _rotation_task.cancel_and_wait("file_appender is destructing");
+              if (_rotation_task.valid())
+                  _rotation_task.cancel_and_wait("file_appender is destructing");
             }
             catch( ... )
             {
