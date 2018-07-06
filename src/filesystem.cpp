@@ -11,10 +11,10 @@
 #include <boost/config.hpp>
 #include <boost/filesystem.hpp>
 
-#ifdef WIN32
-# include <Windows.h>
-# include <UserEnv.h>
-# include <ShlObj.h>
+#ifdef _WIN32
+# include <windows.h>
+# include <userenv.h>
+# include <shlobj.h>
 #else
   #include <sys/types.h>
   #include <sys/stat.h>
@@ -27,19 +27,15 @@
 
 namespace fc {
   // when converting to and from a variant, store utf-8 in the variant
-  void to_variant( const fc::path& path_to_convert, variant& variant_output ) 
+  void to_variant( const fc::path& path_to_convert, variant& variant_output, uint32_t max_depth )
   {
     std::wstring wide_string = path_to_convert.generic_wstring();
     std::string utf8_string;
     fc::encodeUtf8(wide_string, &utf8_string);
     variant_output = utf8_string;
-
-    //std::string path = t.to_native_ansi_path();
-    //std::replace(path.begin(), path.end(), '\\', '/');
-    //v = path;
   }
 
-  void from_variant( const fc::variant& variant_to_convert, fc::path& path_output ) 
+  void from_variant( const fc::variant& variant_to_convert, fc::path& path_output, uint32_t max_depth )
   {
     std::wstring wide_string;
     fc::decodeUtf8(variant_to_convert.as_string(), &wide_string);

@@ -181,7 +181,8 @@ class static_variant {
     static_assert(impl::type_info<Types...>::no_reference_types, "Reference types are not permitted in static_variant.");
     static_assert(impl::type_info<Types...>::no_duplicates, "static_variant type arguments contain duplicate types.");
 
-    int _tag;
+    using tag_type = int64_t;
+    tag_type _tag;
     char storage[impl::type_info<Types...>::size];
 
     template<typename X>
@@ -326,14 +327,15 @@ public:
     }
 
     static int count() { return impl::type_info<Types...>::count; }
-    void set_which( int w ) {
+    void set_which( tag_type w ) {
+      FC_ASSERT( w >= 0 );
       FC_ASSERT( w < count() );
       this->~static_variant();
       _tag = w;
       impl::storage_ops<0, Types...>::con(_tag, storage);
     }
 
-    int which() const {return _tag;}
+    tag_type which() const {return _tag;}
 };
 
 template<typename Result>
@@ -344,43 +346,46 @@ struct visitor {
    struct from_static_variant 
    {
       variant& var;
-      from_static_variant( variant& dv ):var(dv){}
+      const uint32_t _max_depth;
+      from_static_variant( variant& dv, uint32_t max_depth ):var(dv),_max_depth(max_depth){}
 
       typedef void result_type;
       template<typename T> void operator()( const T& v )const
       {
-         to_variant( v, var );
+         to_variant( v, var, _max_depth );
       }
    };
 
    struct to_static_variant
    {
       const variant& var;
-      to_static_variant( const variant& dv ):var(dv){}
+      const uint32_t _max_depth;
+      to_static_variant( const variant& dv, uint32_t max_depth ):var(dv),_max_depth(max_depth){}
 
       typedef void result_type;
       template<typename T> void operator()( T& v )const
       {
-         from_variant( var, v ); 
+         from_variant( var, v, _max_depth );
       }
    };
 
 
-   template<typename... T> void to_variant( const fc::static_variant<T...>& s, fc::variant& v )
+   template<typename... T> void to_variant( const fc::static_variant<T...>& s, fc::variant& v, uint32_t max_depth )
    {
-      variant tmp;
+      FC_ASSERT( max_depth > 0 );
       variants vars(2);
       vars[0] = s.which();
-      s.visit( from_static_variant(vars[1]) );
+      s.visit( from_static_variant(vars[1], max_depth - 1) );
       v = std::move(vars);
    }
-   template<typename... T> void from_variant( const fc::variant& v, fc::static_variant<T...>& s )
+   template<typename... T> void from_variant( const fc::variant& v, fc::static_variant<T...>& s, uint32_t max_depth )
    {
+      FC_ASSERT( max_depth > 0 );
       auto ar = v.get_array();
       if( ar.size() < 2 ) return;
       s.set_which( ar[0].as_uint64() );
-      s.visit( to_static_variant(ar[1]) );
+      s.visit( to_static_variant(ar[1], max_depth - 1) );
    }
 
-  template<typename... T> struct get_typename<T...>  { static const char* name()   { return typeid(static_variant<T...>).name();   } };
+  template<typename... T> struct get_typename  { static const char* name()   { return typeid(static_variant<T...>).name();   } };
 } // namespace fc
