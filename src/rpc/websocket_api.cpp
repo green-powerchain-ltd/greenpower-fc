@@ -91,6 +91,10 @@ std::string websocket_api_connection::on_message(
       auto var = fc::json::from_string(message, fc::json::legacy_parser, _max_conversion_depth);
       const auto& var_obj = var.get_object();
 
+      string ssid;
+      if (var_obj.contains("ssid"))
+         ssid = var_obj["ssid"].as_string();
+
       if( var_obj.contains( "method" ) )
       {
          auto call = var.as<fc::rpc::request>(_max_conversion_depth);
@@ -116,7 +120,7 @@ std::string websocket_api_connection::on_message(
 
                if( call.id )
                {
-                  auto reply = fc::json::to_string( response( *call.id, result, "2.0" ), fc::json::stringify_large_ints_and_doubles, _max_conversion_depth );
+                  auto reply = fc::json::to_string( response( *call.id, ssid, result, "2.0" ), fc::json::stringify_large_ints_and_doubles, _max_conversion_depth );
                   if( send_message )
                      _connection.send_message( reply );
                   return reply;
@@ -133,7 +137,7 @@ std::string websocket_api_connection::on_message(
          }
          if( optexcept ) {
 
-               auto reply = fc::json::to_string( variant(response( *call.id, error_object{ 1, optexcept->to_string(), fc::variant(*optexcept, _max_conversion_depth)}, "2.0" ), _max_conversion_depth ),
+               auto reply = fc::json::to_string( variant(response( *call.id, ssid, error_object{ 1, optexcept->to_string(), fc::variant(*optexcept, _max_conversion_depth)}, "2.0" ), _max_conversion_depth ),
                                                  fc::json::stringify_large_ints_and_doubles, _max_conversion_depth );
                if( send_message )
                   _connection.send_message( reply );

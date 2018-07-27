@@ -92,6 +92,10 @@ void http_api_connection::on_request( const fc::http::request& req, const fc::ht
       auto var = fc::json::from_string( req_body, fc::json::legacy_parser, _max_conversion_depth );
       const auto& var_obj = var.get_object();
 
+      string ssid;
+      if (var_obj.contains("ssid"))
+         ssid = var_obj["ssid"].as_string();
+
       if( var_obj.contains( "method" ) )
       {
          auto call = var.as<fc::rpc::request>(_max_conversion_depth);
@@ -100,7 +104,7 @@ void http_api_connection::on_request( const fc::http::request& req, const fc::ht
             try
             {
                fc::variant result( _rpc_state.local_call( call.method, call.params ), _max_conversion_depth );
-               resp_body = fc::json::to_string( fc::variant( fc::rpc::response( *call.id, result ), _max_conversion_depth),
+               resp_body = fc::json::to_string( fc::variant( fc::rpc::response( *call.id, ssid, result ), _max_conversion_depth),
                                                 fc::json::stringify_large_ints_and_doubles, _max_conversion_depth );
                resp_status = http::reply::OK;
             }
@@ -108,7 +112,7 @@ void http_api_connection::on_request( const fc::http::request& req, const fc::ht
          }
          catch ( const fc::exception& e )
          {
-            resp_body = fc::json::to_string( fc::variant( fc::rpc::response( *call.id, error_object{ 1, e.to_detail_string(), fc::variant(e, _max_conversion_depth)} ), _max_conversion_depth),
+            resp_body = fc::json::to_string( fc::variant( fc::rpc::response( *call.id, ssid, error_object{ 1, e.to_detail_string(), fc::variant(e, _max_conversion_depth)} ), _max_conversion_depth),
                                              fc::json::stringify_large_ints_and_doubles, _max_conversion_depth );
             resp_status = http::reply::InternalServerError;
          }
