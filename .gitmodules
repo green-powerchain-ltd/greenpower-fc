@@ -7,3 +7,7 @@
 [submodule "vendor/editline"]
 	path = vendor/editline
 	url = https://github.com/troglobit/editline.git
+[submodule "vendor/websocketpp"]
+	path = vendor/websocketpp
+	url = git@gitlab.internal.roundglobe.tech:DasCoin/dascoin-websocketpp.git
+	branch = dascoin-master
