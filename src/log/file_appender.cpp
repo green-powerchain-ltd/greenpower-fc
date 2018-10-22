@@ -34,21 +34,31 @@ namespace fc {
       public:
          impl( const config& c) : cfg( c )
          {
-             if( cfg.rotate )
-             {
-                 FC_ASSERT( cfg.rotation_interval >= seconds( 1 ) );
-                 FC_ASSERT( cfg.rotation_limit >= cfg.rotation_interval );
-                 fc::create_directories(cfg.filename.parent_path());
-                 rotate_files( true );
-             }
+            try
+            {
+               fc::create_directories(cfg.filename.parent_path());
+
+               if( cfg.rotate )
+               {
+                  FC_ASSERT( cfg.rotation_interval >= seconds( 1 ) );
+                  FC_ASSERT( cfg.rotation_limit >= cfg.rotation_interval );
+
+                  rotate_files( true );
+               } else {
+                  out.open( cfg.filename, std::ios_base::out | std::ios_base::app);
+               }
+            }
+            catch( ... )
+            {
+               std::cerr << "error opening log file: " << cfg.filename.preferred_string() << "\n";
+            }
          }
 
          ~impl()
          {
             try
             {
-              if (_rotation_task.valid())
-                  _rotation_task.cancel_and_wait("file_appender is destructing");
+              _rotation_task.cancel_and_wait("file_appender is destructing");
             }
             catch( ... )
             {
@@ -134,18 +144,7 @@ namespace fc {
 
    file_appender::file_appender( const variant& args ) :
      my( new impl( args.as<config>( FC_MAX_LOG_OBJECT_DEPTH ) ) )
-   {
-      try
-      {
-         if(!my->cfg.rotate)
-            my->out.open( my->cfg.filename, std::ios_base::out | std::ios_base::app);
-
-      }
-      catch( ... )
-      {
-         std::cerr << "error opening log file: " << my->cfg.filename.preferred_string() << "\n";
-      }
-   }
+   {}
 
    file_appender::~file_appender(){}
 
