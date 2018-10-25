@@ -16,8 +16,8 @@
 #endif
 #include <openssl/crypto.h>
 
-#if defined(_MSC_VER)
-# include <Windows.h>
+#if defined(_WIN32)
+# include <windows.h>
 #endif
 
 namespace fc {
@@ -30,6 +30,7 @@ struct aes_encoder::impl
 aes_encoder::aes_encoder()
 {
   static int init = init_openssl();
+  (void)init;
 }
 
 aes_encoder::~aes_encoder()
@@ -70,7 +71,7 @@ uint32_t aes_encoder::encode( const char* plaintxt, uint32_t plaintext_len, char
         FC_THROW_EXCEPTION( aes_exception, "error during aes 256 cbc encryption update", 
                            ("s", ERR_error_string( ERR_get_error(), nullptr) ) );
     }
-    FC_ASSERT( ciphertext_len == plaintext_len, "", ("ciphertext_len",ciphertext_len)("plaintext_len",plaintext_len) );
+    FC_ASSERT( (uint32_t) ciphertext_len == plaintext_len, "", ("ciphertext_len",ciphertext_len)("plaintext_len",plaintext_len) );
     return ciphertext_len;
 }
 #if 0
@@ -96,9 +97,10 @@ struct aes_decoder::impl
 };
 
 aes_decoder::aes_decoder()
-  {
+{
   static int init = init_openssl();
-  }
+  (void)init;
+}
 
 void aes_decoder::init( const fc::sha256& key, const fc::uint128& init_value )
 {
@@ -137,7 +139,7 @@ uint32_t aes_decoder::decode( const char* ciphertxt, uint32_t ciphertxt_len, cha
         FC_THROW_EXCEPTION( aes_exception, "error during aes 256 cbc decryption update", 
                            ("s", ERR_error_string( ERR_get_error(), nullptr) ) );
     }
-    FC_ASSERT( ciphertxt_len == plaintext_len, "", ("ciphertxt_len",ciphertxt_len)("plaintext_len",plaintext_len) );
+    FC_ASSERT( ciphertxt_len == (uint32_t)plaintext_len, "", ("ciphertxt_len",ciphertxt_len)("plaintext_len",plaintext_len) );
 	return plaintext_len;
 }
 #if 0
@@ -396,7 +398,7 @@ boost::mutex*         openssl_thread_config::openssl_mutexes = nullptr;
 
 unsigned long openssl_thread_config::get_thread_id()
 {
-#ifdef _MSC_VER
+#ifdef _WIN32
   return (unsigned long)::GetCurrentThreadId();
 #else
   return (unsigned long)(&fc::thread::current());    // TODO: should expose boost thread id
