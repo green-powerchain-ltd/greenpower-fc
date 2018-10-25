@@ -366,8 +366,6 @@ else()
   set( ZLIB_LIBRARIES "" )
 endif( ZLIB_FOUND )
 
-add_definitions( -DWITH_EXOTIC_JSON_PARSERS )
-
 # This will become unnecessary once we update to websocketpp which fixes upstream issue #395
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DWEBSOCKETPP_STRICT_MASKING")
 
@@ -513,10 +511,12 @@ ENDIF()
        IF("${OPENSSL_ROOT_DIR}" STREQUAL "")
           get_filename_component(OPENSSL_ROOT_DIR "${OPENSSL_INCLUDE_DIR}/.." REALPATH)
        ENDIF()
-       SET(OPENSSL_CONF_SOURCE "${OPENSSL_ROOT_DIR}/ssl/openssl.cnf")
-       IF(MINGW)
-          SET(OPENSSL_CONF_SOURCE "${OPENSSL_ROOT_DIR}/openssl.cnf")
-       ENDIF(MINGW)
+       IF("${OPENSSL_CONF_SOURCE}" STREQUAL "")
+          SET(OPENSSL_CONF_SOURCE "${OPENSSL_ROOT_DIR}/ssl/openssl.cnf")
+          IF(MINGW)
+            SET(OPENSSL_CONF_SOURCE "${OPENSSL_ROOT_DIR}/openssl.cnf")
+          ENDIF(MINGW)
+       ENDIF()
        SET(POST_BUILD_STEP_COMMANDS ${POST_BUILD_STEP_COMMANDS}
            COMMAND ${CMAKE_COMMAND} -E copy_if_different "${OPENSSL_CONF_SOURCE}" "${OPENSSL_CONF_TARGET}/openssl.cnf")
     ENDIF(WIN32)
