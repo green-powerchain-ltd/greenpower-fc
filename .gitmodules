@@ -9,5 +9,5 @@
 	url = https://github.com/troglobit/editline.git
 [submodule "vendor/websocketpp"]
 	path = vendor/websocketpp
-	url = ../dascoin-websocketpp
+	url = ../greenpower-websocketpp
 	branch = dascoin-master
